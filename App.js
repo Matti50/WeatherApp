@@ -25,6 +25,16 @@ export default class App extends Component {
     }
   }
 
+  makeRequest = (uri) => {
+   
+    return axios.get(uri)
+    .catch((err)=> {
+      console.log(err);
+      this.setState({locationName:"could not fetch data"});
+      
+    });
+  }
+
   getWeather = () => {
     let api= "https://api.openweathermap.org/data/2.5/weather?";
     let appid = "a294e99fa4b91f5545b30867425ea426";
@@ -33,21 +43,40 @@ export default class App extends Component {
     let uri = api + lat + long + "&units=metric" + "&appid=" + appid;
 
     let date = new Date();
-    let currentTime = date.getHours() + ":" + date.getMinutes()
-
-    axios.get(uri).then(res => {
-      let weather = res.data;
-      this.setState({locationName: weather.name,locationTempeature: weather.main.temp,
-        temperatureIcon: "http://openweathermap.org/img/wn/" + weather.weather[0].icon + "@2x.png",
+    let minutes = date.getMinutes();
+    if(Number(minutes)<10){
+      minutes = "0" + minutes;
+    }
+    let currentTime = date.getHours() + ":" + minutes
+    
+    let data = this.makeRequest(uri);
+    
+    if(data !== undefined){
+      data.then((res) => (this.setState({
+        locationName: res.data.name,
+        locationTempeature: res.data.main.temp,
+        temperatureIcon: "http://openweathermap.org/img/wn/" + res.data.weather[0].icon + "@2x.png",
         lastReport: currentTime
-      });
-        
-      }).catch((err)=> {console.log(err);
-        this.setState({locationName:"could not fetch data"})});
-    
-    
-
+      })  
+      ));
+      
+    }
+      
   }
+
+  _getLocationAsync = async () => {
+    let {status} = await Permissions.askAsync(Permissions.LOCATION);
+    if(status !== "granted"){
+      this.setState({
+        errorMessage:"You have to enable location permissions for the app to work"
+      })
+    }
+
+    let location = await Location.getCurrentPositionAsync({});
+    this.setState({latitude: location.coords.latitude,longitude: location.coords.longitude});
+    
+  }
+
 
   async componentDidMount(){
       if(Platform.OS ==="android" && !Constants.isDevice){
@@ -61,18 +90,7 @@ export default class App extends Component {
       }
   }
   
-  _getLocationAsync = async () => {
-    let {status} = await Permissions.askAsync(Permissions.LOCATION);
-    if(status !== "granted"){
-      this.setState({
-        errorMessage:"You have to enable location permissions for the app to work"
-      })
-    }
-
-    let location = await Location.getCurrentPositionAsync({});
-    this.setState({latitude: location.coords.latitude,longitude: location.coords.longitude});
-    
-  }
+  
 
   render() {
     let location = "";

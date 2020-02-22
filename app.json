@@ -12,6 +12,11 @@
       "ios",
       "android",
       "web"
-    ]
+    ],
+    "android":{
+      "package": "com.matiInc.weatherapp",
+      "versionCode": 1
+    }
   }
+ 
 }
